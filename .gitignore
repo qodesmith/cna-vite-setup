@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+
+package-lock.json
+tsconfig.paths.json
+
+# Created as an intermediate file while the Vite dev server is spinning up.
+# Ignore it just in case Vite didn't delete it in time.
+vite.config.ts.js
