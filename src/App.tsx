@@ -2,6 +2,7 @@ import {useState} from 'react'
 import logo from './logo.svg'
 import './App.css'
 import ATest from 'ATest'
+import BTest from 'BTest'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -37,6 +38,7 @@ function App() {
           </a>
         </p>
         <ATest />
+        <BTest />
       </header>
     </div>
   )
