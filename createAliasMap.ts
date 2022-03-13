@@ -2,9 +2,10 @@ import path from 'path'
 import chokidar from 'chokidar'
 import {writeFile, readFile} from 'fs/promises'
 import {fileURLToPath} from 'url'
-import {AliasOptions} from 'vite'
-import {Matcher} from 'anymatch'
 import chalk from 'chalk'
+
+import type {Matcher} from 'anymatch'
+import type {AliasOptions} from 'vite'
 
 const DIR_NAME = path.dirname(fileURLToPath(import.meta.url))
 const INITIALIZED_FLAG = '__VITE_APP_ALIAS_MAP_INITIALIZED__'
