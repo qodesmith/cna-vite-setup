@@ -25,6 +25,7 @@ type TsConfigPathsType = {
   }
 }
 type CreateViteAliasMapReturnType = {find: string; replacement: string}
+type DuplicateModulesType = Array<[string, string[]]>
 
 /**
  * Creates and returns the alias map consumed by `vite.config.js` with the side
@@ -104,7 +105,8 @@ export default async function createAliasMap(
 function createViteAliasMap(
   fileMap: FileMapType
 ): CreateViteAliasMapReturnType[] {
-  return Object.entries(fileMap).map(([find, replacements]) => {
+  const duplicates: DuplicateModulesType = []
+  const aliasMap = Object.entries(fileMap).map(([find, replacements]) => {
     /**
      * It's possible that two files with the same name end up getting mapped to
      * the same replacement (`compilerOptions.paths[key]` for
@@ -112,10 +114,15 @@ function createViteAliasMap(
      * in the console about what we found.
      */
     const replacement = replacements[0]
-    if (replacements.length > 1) logMultipleModuleWarning(find, replacements)
+    if (replacements.length > 1) {
+      duplicates.push([find, replacements])
+    }
 
     return {find, replacement}
   })
+
+  logMultipleModuleWarnings(duplicates)
+  return aliasMap
 }
 
 function getImportPrefix(
@@ -132,7 +139,7 @@ async function processWatcherEvent(
   absoluteFilePath: string,
   fileMap: FileMapType,
   aliasArray: CreateAliasInputType[]
-) {
+): Promise<void> {
   const componentPathPrefix = getImportPrefix(absoluteFilePath, aliasArray)
   const fileName = path.parse(absoluteFilePath).name
   const mapKey = componentPathPrefix
@@ -213,19 +220,28 @@ function tsConfigPathsToFileMap(str: string): FileMapType {
   )
 }
 
-function logMultipleModuleWarning(name: string, absolutePaths: string[]) {
+/**
+ * Logs a stylish warning in the console when modules with the same name but
+ * different paths are found. The first one will be used.
+ */
+function logMultipleModuleWarnings(duplicates: DuplicateModulesType): void {
   console.warn()
-  const textArr = []
-  const cyanNum = chalk.cyan.bold(absolutePaths.length)
-  const cyanName = chalk.cyan.bold(name)
-  const yellowMsg = chalk.yellow('paths are associated with the module')
-  textArr.push(`${cyanNum} ${yellowMsg} ${cyanName}:`)
+  const textArr: string[] = []
 
-  absolutePaths.forEach(pathValue =>
-    textArr.push(chalk.green(`  ${pathValue}`))
-  )
-  textArr.push(chalk.yellow('There should only be 1 value. Using the 1st...'))
-  textArr.push('')
+  duplicates.forEach(([name, absolutePaths]) => {
+    const cyanNum = chalk.cyan.bold(absolutePaths.length)
+    const cyanName = chalk.cyan.bold(name)
+    const yellowMsg = chalk.yellow('paths are associated with the module')
+    const yellowColon = chalk.yellow(':')
+    textArr.push(`${cyanNum} ${yellowMsg} ${cyanName}${yellowColon}`)
+
+    absolutePaths.forEach((absolutePath, i) => {
+      const relativePath = path.relative(DIR_NAME, absolutePath)
+      const suffix = i === 0 ? '(← using)' : ''
+      textArr.push(`  ${chalk.green(relativePath)}${suffix}`)
+    })
+    textArr.push('')
+  })
 
   const maxLength = getMaxLengthNoAnsi(textArr)
   const header = ' *** MULTIPLE MODULES FOUND *** '
@@ -243,7 +259,7 @@ function logMultipleModuleWarning(name: string, absolutePaths: string[]) {
 /**
  * Puts a yellow border around text and logs it to the console.
  */
-function frameText(textArr: string[]) {
+function frameText(textArr: string[]): string[] {
   const maxLength = getMaxLengthNoAnsi(textArr)
   const h = chalk.yellow('─')
   const tl = chalk.yellow('╭')
@@ -269,11 +285,15 @@ function frameText(textArr: string[]) {
  * Remove ANSI color characters (this is a bold cyan "hello"):
  * '\u001b[1m\u001b[36mhello\u001b[39m\u001b[22m'.replace(/\u001b\[.*?m/g, '')
  */
-function removeAnsiChars(text: string) {
+function removeAnsiChars(text: string): string {
   return text.replace(/\u001b\[.*?m/g, '')
 }
 
-function getMaxLengthNoAnsi(textArr: string[]) {
+/**
+ * Gets the length of the longest string in an array of strings, ignoring ansi
+ * characters.
+ */
+function getMaxLengthNoAnsi(textArr: string[]): number {
   return textArr.reduce((len, line) => {
     return Math.max(len, removeAnsiChars(line).length)
   }, 0)
