@@ -34,6 +34,8 @@ type DuplicateModulesType = Array<[string, string[]]>
  * Vite will restart the app (re-requiring this module) if the Vite config or
  * TypeScript config files are changed. Therefore, this module relies on a flag
  * set on `process.env` to know whether this is the first time it's being run.
+ * If it's not the first run, it will reconstruct the alias map from
+ * `tsconfig.paths.json`. If it is the first run, it will start from scratch.
  */
 export default async function createAliasMap(
   arr: CreateAliasInputType[]
@@ -102,6 +104,11 @@ export default async function createAliasMap(
   })
 }
 
+/**
+ * Takes in a `fileMap` and creates the actual `aliasMap` that gets consumed
+ * by `vite.config.js` with te side effect of warning in the console if any
+ * duplicate modules have been found.
+ */
 function createViteAliasMap(
   fileMap: FileMapType
 ): CreateViteAliasMapReturnType[] {
@@ -114,9 +121,7 @@ function createViteAliasMap(
      * in the console about what we found.
      */
     const replacement = replacements[0]
-    if (replacements.length > 1) {
-      duplicates.push([find, replacements])
-    }
+    if (replacements.length > 1) duplicates.push([find, replacements])
 
     return {find, replacement}
   })
@@ -125,15 +130,23 @@ function createViteAliasMap(
   return aliasMap
 }
 
+/**
+ * Returns the path prefix for importing modules, such as '@components', which
+ * would look like:
+ *
+ * import MyComponent from '@components/MyComponent'
+ */
 function getImportPrefix(
   absoluteFilePath: string,
   arr: CreateAliasInputType[]
-): string {
-  return (
-    arr.find(item => absoluteFilePath.startsWith(item.sourcePath))?.prefix ?? ''
-  )
+): string | undefined {
+  return arr.find(item => absoluteFilePath.startsWith(item.sourcePath))?.prefix
 }
 
+/**
+ * Responds to Chokidar's 'add' and 'unlink' events and updates `fileMap`
+ * accordingly, triggering the creation of `tsConfig.paths.json`.
+ */
 async function processWatcherEvent(
   evt: 'add' | 'unlink',
   absoluteFilePath: string,
@@ -143,7 +156,7 @@ async function processWatcherEvent(
   const componentPathPrefix = getImportPrefix(absoluteFilePath, aliasArray)
   const fileName = path.parse(absoluteFilePath).name
   const mapKey = componentPathPrefix
-    ? `${componentPathPrefix}/${fileName}`
+    ? `${componentPathPrefix}${path.sep}${fileName}`
     : fileName
 
   if (evt === 'add') {
@@ -158,7 +171,9 @@ async function processWatcherEvent(
 }
 
 /**
- * Example `tsConfig.paths.json` contents:
+ * Creates `tsConfig.paths.json`.
+ *
+ * Example file contents:
  * {
  *   "compilerOptions": {
  *     "paths": {
