@@ -220,6 +220,9 @@ function writeTsConfigPathsJSON(fileMap: FileMapType): Promise<void> {
   return writeFile(TS_PATHS_CONFIG_LOCATION, contents, {encoding: 'utf8'})
 }
 
+/**
+ * Converts a `tsconfig.paths.json` object into a `fileMap`.
+ */
 function tsConfigPathsToFileMap(str: string): FileMapType {
   const json = JSON.parse(str) as TsConfigPathsType
   const pathsObj = json.compilerOptions.paths
