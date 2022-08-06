@@ -27,7 +27,6 @@ import type {Plugin} from 'vite'
 export default defineConfig(async () => {
   const alias = await createAliasMap([
     {sourcePath: './src', extensions: ['.ts', '.tsx', '.js', '.jsx']},
-    {sourcePath: './src', extensions: []},
   ])
   const viteRestartValue: Plugin = (() => {
     /*
