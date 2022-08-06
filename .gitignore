@@ -7,6 +7,8 @@ dist-ssr
 package-lock.json
 tsconfig.paths.json
 
-# Created as an intermediate file while the Vite dev server is spinning up.
-# Ignore it just in case Vite didn't delete it in time.
+# This file is created as an intermediate file while the Vite dev server is
+# spinning up. Ignoring it just in case Vite didn't delete it in time.
+# This has a `.js` extension, not to be confused with the checked in file that
+# has a `.ts` extension.
 vite.config.ts.js

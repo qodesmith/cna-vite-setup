@@ -5,7 +5,6 @@
     "dev": "npm run ensureTsConfigPaths && vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "ensureTsConfigPaths2": "TS_NODE_PROJECT=tsconfig.ensure.json node --loader ts-node/esm ./ensureTsConfigPaths.ts",
     "ensureTsConfigPaths": "node ./ensureTsConfigPaths.js"
   },
   "devDependencies": {
