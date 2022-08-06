@@ -30,6 +30,7 @@ export default defineConfig(async () => {
   ])
   const viteRestartValue: Plugin = (() => {
     /*
+      https://github.com/antfu/vite-plugin-restart/issues/11#issuecomment-1207235597
       Getting `TypeError: ViteRestart is not a function`. Not sure if it's
       this local setup but covering both cases to be safe.
     */
