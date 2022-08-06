@@ -41,8 +41,11 @@ export default async function createAliasMap(
   arr: CreateAliasInputType[]
 ): Promise<AliasOptions> {
   // Transform the `sourcePath` of each alias to be an absolute path.
-  const aliasArray = arr.map(({sourcePath, ...rest}) => {
-    return {sourcePath: path.resolve(DIR_NAME, sourcePath), ...rest}
+  const aliasArray = arr.map(({sourcePath, extensions, ...rest}) => {
+    if (extensions.length === 0) {
+      throw new Error('`extensions` needs at least one value')
+    }
+    return {sourcePath: path.resolve(DIR_NAME, sourcePath), extensions, ...rest}
   })
 
   /**

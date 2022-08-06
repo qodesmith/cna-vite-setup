@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import createAliasMap from './createAliasMap'
 import ViteRestart from 'vite-plugin-restart'
 
+import type {Plugin} from 'vite'
+
 /**
  * Example usage of `createAliasMap`:
  *
@@ -25,14 +27,23 @@ import ViteRestart from 'vite-plugin-restart'
 export default defineConfig(async () => {
   const alias = await createAliasMap([
     {sourcePath: './src', extensions: ['.ts', '.tsx', '.js', '.jsx']},
+    {sourcePath: './src', extensions: []},
   ])
+  const viteRestartValue: Plugin = (() => {
+    /*
+      Getting `TypeError: ViteRestart is not a function`. Not sure if it's
+      this local setup but covering both cases to be safe.
+    */
+    try {
+      return ViteRestart({restart: ['tsconfig.paths.json']})
+    } catch {
+      // @ts-ignore - Doesn't look like `vite-plugin-restart` exports correctly.
+      return ViteRestart.default({restart: ['tsconfig.paths.json']})
+    }
+  })()
 
   return {
-    plugins: [
-      react(),
-      // @ts-ignore - Doesn't look like `vite-plugin-restart` exports correctly.
-      ViteRestart.default({restart: ['tsconfig.paths.json']}),
-    ],
+    plugins: [react(), viteRestartValue],
     resolve: {alias},
     clearScreen: false,
     server: {open: true},
