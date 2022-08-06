@@ -255,8 +255,11 @@ function logMultipleModuleWarnings(duplicates: DuplicateModulesType): void {
 
     absolutePaths.forEach((absolutePath, i) => {
       const relativePath = path.relative(DIR_NAME, absolutePath)
-      const suffix = i === 0 ? '(← using)' : ''
-      textArr.push(`  ${chalk.green(relativePath)}${suffix}`)
+      if (i === 0) {
+        textArr.push(`  ${chalk.green.bold(relativePath)}  (← using)`)
+      } else {
+        textArr.push(`  ${chalk.green(relativePath)}`)
+      }
     })
     textArr.push('')
   })
