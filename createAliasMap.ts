@@ -40,8 +40,8 @@ type DuplicateModulesType = Array<[string, string[]]>
 export default async function createAliasMap(
   arr: CreateAliasInputType[]
 ): Promise<AliasOptions> {
+  // Transform the `sourcePath` of each alias to be an absolute path.
   const aliasArray = arr.map(({sourcePath, ...rest}) => {
-    // Transform the `sourcePath` to be an absolute path.
     return {sourcePath: path.resolve(DIR_NAME, sourcePath), ...rest}
   })
 
@@ -83,6 +83,10 @@ export default async function createAliasMap(
         }
       })
 
+      /*
+        `chokidar` is a robust file-watching solution that takes care of the
+        nuances of watching files on differe OS's.
+      */
       chokidar
         .watch(pathsToWatch, {ignored: ignoredArr})
         .on('add', absoluteFilePath => {
@@ -99,6 +103,10 @@ export default async function createAliasMap(
             process.env[INITIALIZED_FLAG] = Date.now().toString()
             resolve(aliasMap)
           })
+        })
+        .on('error', error => {
+          console.log(`Watcher error: ${error}`)
+          process.exit(1)
         })
     }
   })
